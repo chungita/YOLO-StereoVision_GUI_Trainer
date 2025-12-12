@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# PyTorch Models (大文件)
+*.pt
+*.pth
+
+# Dataset (大文件)
+Dataset/dataset_RGB_*/
+Dataset/dataset_RGBD_*/
+Dataset/ETH3D/
+Dataset/Middlebury/
+
+# Training outputs
+runs/
+training_logs/
+demo_output/
+
+# Cache files
+*.cache
+*.npy
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Compressed files
+*.7z
+*.zip
+*.tar
+*.gz
+
