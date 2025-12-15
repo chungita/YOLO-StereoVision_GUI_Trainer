@@ -1,0 +1,17 @@
+channels: 3
+created_at: '2025-12-12 14:47:12'
+dataset_path: Dataset\dataset_RGB_20251212
+depth_pattern: null
+description: 3通道RGB數據集 - Forest格式
+folder_count_limit: 1
+image_pattern: Img0_*
+mode: forest
+names:
+- drone
+nc: 1
+path: D:\YOLO\Dataset\dataset_RGB_20251212
+source_path: D:\DMD\Forest
+test: images/test
+train: images/train
+use_depth: false
+val: images/val
