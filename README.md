@@ -408,13 +408,13 @@ For questions or suggestions, please contact us via:
 ## 📸 Screenshots
 
 ### Main Interface
-![Main Interface](docs/images/main_interface.png)
+![Main Interface](docs/images/Main%20Interface.png)
 
 ### Training Interface
-![Training](docs/images/training.png)
+![Training](docs/images/Training%20Interface.png)
 
 ### Inference Results
-![Inference](docs/images/inference.png)
+![Inference](docs/images/Inference%20Results.png)
 
 ---
 
