@@ -1,5 +1,5 @@
 convert:
-  folder_count: 10
+  folder_count: 1
   output_path: ''
   source_path: D:/DMD/Forest
   test_ratio: 0.05
@@ -15,7 +15,7 @@ inference:
   mode: 單張圖像推理
   model_path: D:/YOLO/runs/yolov12n_50epochs_20251022_1343/train/weights/best.pt
   output_path: ''
-last_saved: '2025-12-17 09:11:35'
+last_saved: '2025-12-17 12:57:33'
 model_analyzer:
   file_type_filter: 所有類型
 model_modifier:
@@ -110,7 +110,7 @@ stereo_training:
     weight_decay: 1.0e-05
   batch_size: 2
   dataset_path: Dataset\dataset_Stereo_20251215
-  model_name: raftstereo-sceneflow.pth
+  model_name: (無可用模型 - 請放置模型文件)
   num_steps: 1000
   output_path: ''
 window:
@@ -119,4 +119,4 @@ window:
     width: 1716
     x: 2
     y: 126
-  last_tab_index: 5
+  last_tab_index: 0
