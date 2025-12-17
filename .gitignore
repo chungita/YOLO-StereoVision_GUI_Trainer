@@ -57,6 +57,11 @@ data/
 *.jpg
 *.jpeg
 
+# BUT allow documentation images
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+
 # Logs
 *.log
 logs/
