@@ -420,6 +420,6 @@ For questions or suggestions, please contact:
 
 **⭐ If this project helps you, please give it a star!**
 
-Made with ❤️ by YOLO Team
+
 
 </div>
