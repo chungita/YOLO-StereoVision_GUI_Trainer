@@ -28,7 +28,7 @@ YOLO-StereoVision GUI Trainer is a powerful deep learning training platform desi
 - 🎨 **Modern Interface** - Beautiful and user-friendly GUI based on PyQt5
 - 🧩 **Modular Design** - Architecture following software engineering best practices
 - 🚀 **Full-Featured Integration** - Complete workflow from data conversion to training, inference, and analysis
-- 👁️ **Stereo Vision Support** - Built-in RAFT-Stereo (raftstereo-sceneflow.pth)
+- 👁️ **Stereo Vision Support** - Built-in RAFT-Stereo with 5 pretrained models
 - 💾 **Intelligent Settings Management** - Automatic save and restore of user settings
 - 🖥️ **GPU Acceleration** - Full CUDA acceleration support
 
@@ -63,7 +63,12 @@ YOLO-StereoVision GUI Trainer is a powerful deep learning training platform desi
 - **Structure Optimization** - Model pruning and optimization
 
 ### 6. 👁️ Stereo Vision
-- **RAFT-Stereo Training** - Professional stereo matching training (Model: raftstereo-sceneflow.pth)
+- **RAFT-Stereo Training** - Professional stereo matching training with 5 pretrained models:
+  - `raftstereo-sceneflow.pth` - Trained on SceneFlow dataset
+  - `raftstereo-middlebury.pth` - Trained on Middlebury dataset
+  - `raftstereo-eth3d.pth` - Trained on ETH3D dataset
+  - `iraftstereo_rvc.pth` - Iterative RAFT-Stereo for RVC
+  - `raftstereo-realtime.pth` - Optimized for real-time inference
 - **Depth Estimation** - Generate depth maps from binocular images
 - **Stereo Inference** - Real-time stereo vision inference
 
@@ -260,9 +265,15 @@ dataset/
 ### 5️⃣ Stereo Vision
 
 1. **Prepare Binocular Data** - Left and right view image pairs
-2. **Configure Training Parameters** - Select stereo vision training module
-3. **Execute Training** - Train depth estimation model
-4. **Depth Inference** - Generate depth maps using trained model
+2. **Select Model** - Choose from 5 available pretrained models:
+   - **raftstereo-sceneflow.pth** - Best for general scenes
+   - **raftstereo-middlebury.pth** - Optimized for indoor scenes
+   - **raftstereo-eth3d.pth** - High-quality outdoor scenes
+   - **iraftstereo_rvc.pth** - Iterative refinement model
+   - **raftstereo-realtime.pth** - Fastest inference speed
+3. **Configure Training Parameters** - Select stereo vision training module
+4. **Execute Training** - Train depth estimation model
+5. **Depth Inference** - Generate depth maps using trained model
 
 ---
 
