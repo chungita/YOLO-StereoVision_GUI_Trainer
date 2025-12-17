@@ -380,9 +380,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👥 Authors
+## 👥 Author
 
-- **YOLO Team** - *Initial work*
+- **ITA CHUNG** - *Initial work*
 
 ---
 
@@ -397,11 +397,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📮 Contact
 
-For questions or suggestions, please contact us via:
+For questions or suggestions, please contact:
 
-- 📧 Email: your.email@example.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/YOLO-StereoVision_GUI_Trainer/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/YOLO-StereoVision_GUI_Trainer/discussions)
+- 📧 Email: joe.chungita@gmail.com
 
 ---
 
