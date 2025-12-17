@@ -28,7 +28,7 @@ YOLO-StereoVision GUI Trainer is a powerful deep learning training platform desi
 - 🎨 **Modern Interface** - Beautiful and user-friendly GUI based on PyQt5
 - 🧩 **Modular Design** - Architecture following software engineering best practices
 - 🚀 **Full-Featured Integration** - Complete workflow from data conversion to training, inference, and analysis
-- 👁️ **Stereo Vision Support** - Built-in RAFT-Stereo and other stereo vision models
+- 👁️ **Stereo Vision Support** - Built-in RAFT-Stereo (raftstereo-sceneflow.pth)
 - 💾 **Intelligent Settings Management** - Automatic save and restore of user settings
 - 🖥️ **GPU Acceleration** - Full CUDA acceleration support
 
@@ -63,7 +63,7 @@ YOLO-StereoVision GUI Trainer is a powerful deep learning training platform desi
 - **Structure Optimization** - Model pruning and optimization
 
 ### 6. 👁️ Stereo Vision
-- **RAFT-Stereo Training** - Professional stereo matching training
+- **RAFT-Stereo Training** - Professional stereo matching training (Model: raftstereo-sceneflow.pth)
 - **Depth Estimation** - Generate depth maps from binocular images
 - **Stereo Inference** - Real-time stereo vision inference
 
