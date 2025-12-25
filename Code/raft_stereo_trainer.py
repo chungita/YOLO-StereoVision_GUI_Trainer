@@ -1185,11 +1185,12 @@ class Logger:
         self.total_steps = 0
         self.running_loss = {}
         self.output_dir = output_dir
-        # 修改：TensorBoard日志直接保存到runs/tensorboard目录
+        # 修改：TensorBoard日志保存到output_dir/tensorboard目录
         from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%dT%H%M")
-        tensorboard_dir = f'runs/tensorboard/stereo_training_{timestamp}'
-        self.writer = SummaryWriter(log_dir=tensorboard_dir)
+        tensorboard_dir = Path(output_dir) / 'tensorboard' / f'stereo_training_{timestamp}'
+        tensorboard_dir.mkdir(parents=True, exist_ok=True)
+        self.writer = SummaryWriter(log_dir=str(tensorboard_dir))
 
     def _print_training_status(self):
         metrics_data = [self.running_loss[k]/Logger.SUM_FREQ for k in sorted(self.running_loss.keys())]
@@ -1201,8 +1202,9 @@ class Logger:
         if self.writer is None:
             from datetime import datetime
             timestamp = datetime.now().strftime("%Y%m%dT%H%M")
-            tensorboard_dir = f'runs/tensorboard/stereo_training_{timestamp}'
-            self.writer = SummaryWriter(log_dir=tensorboard_dir)
+            tensorboard_dir = Path(self.output_dir) / 'tensorboard' / f'stereo_training_{timestamp}'
+            tensorboard_dir.mkdir(parents=True, exist_ok=True)
+            self.writer = SummaryWriter(log_dir=str(tensorboard_dir))
 
         for k in self.running_loss:
             self.writer.add_scalar(k, self.running_loss[k]/Logger.SUM_FREQ, self.total_steps)
@@ -1225,8 +1227,9 @@ class Logger:
         if self.writer is None:
             from datetime import datetime
             timestamp = datetime.now().strftime("%Y%m%dT%H%M")
-            tensorboard_dir = f'runs/tensorboard/stereo_training_{timestamp}'
-            self.writer = SummaryWriter(log_dir=tensorboard_dir)
+            tensorboard_dir = Path(self.output_dir) / 'tensorboard' / f'stereo_training_{timestamp}'
+            tensorboard_dir.mkdir(parents=True, exist_ok=True)
+            self.writer = SummaryWriter(log_dir=str(tensorboard_dir))
 
         for key in results:
             self.writer.add_scalar(key, results[key], self.total_steps)
@@ -1314,8 +1317,8 @@ def train(args, progress_callback=None):
                 progress_callback(total_steps, args.num_steps, f"訓練中 Training... Step {total_steps}/{args.num_steps}")
 
             if total_steps % validation_frequency == validation_frequency - 1:
-                # 修改：checkpoints保存到runs/checkpoints目录
-                checkpoint_dir = Path('runs') / 'checkpoints' / 'stereo_training'
+                # 修改：checkpoints保存到output_dir/checkpoints目录
+                checkpoint_dir = Path(args.output_dir) / 'checkpoints' / 'stereo_training'
                 checkpoint_dir.mkdir(parents=True, exist_ok=True)
                 save_path = checkpoint_dir / f'{total_steps + 1}_{args.name}.pth'
                 logging.info(f"Saving file {save_path.absolute()}")
@@ -1331,8 +1334,8 @@ def train(args, progress_callback=None):
                 break
 
         if len(train_loader) >= 10000:
-            # 修改：checkpoints保存到runs/checkpoints目录
-            checkpoint_dir = Path('runs') / 'checkpoints' / 'stereo_training'
+            # 修改：checkpoints保存到output_dir/checkpoints目录
+            checkpoint_dir = Path(args.output_dir) / 'checkpoints' / 'stereo_training'
             checkpoint_dir.mkdir(parents=True, exist_ok=True)
             save_path = checkpoint_dir / f'{total_steps + 1}_epoch_{args.name}.pth.gz'
             logging.info(f"Saving file {save_path}")
@@ -1340,8 +1343,8 @@ def train(args, progress_callback=None):
 
     print("FINISHED TRAINING")
     logger.close()
-    # 修改：最终模型保存到runs/checkpoints目录
-    checkpoint_dir = Path('runs') / 'checkpoints' / 'stereo_training'
+    # 修改：最终模型保存到output_dir/checkpoints目录
+    checkpoint_dir = Path(args.output_dir) / 'checkpoints' / 'stereo_training'
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     PATH = checkpoint_dir / f'{args.name}.pth'
     torch.save(model.state_dict(), PATH)
@@ -1398,10 +1401,8 @@ def main():
     # 創建輸出目錄
     output_dir = Path(args.output_dir)
     checkpoints_dir = output_dir / "checkpoints"
-    runs_dir = output_dir / "runs"
     
     checkpoints_dir.mkdir(exist_ok=True, parents=True)
-    runs_dir.mkdir(exist_ok=True, parents=True)
 
     train(args)
 
@@ -1486,10 +1487,8 @@ class RAFTStereoTrainer:
         # 確保輸出目錄存在
         output_dir = Path(self.config.output_dir)
         checkpoints_dir = output_dir / "checkpoints"
-        runs_dir = output_dir / "runs"
         
         checkpoints_dir.mkdir(exist_ok=True, parents=True)
-        runs_dir.mkdir(exist_ok=True, parents=True)
         
         # 設置日誌
         logging.basicConfig(level=logging.INFO,
