@@ -127,43 +127,83 @@ def readFlow(fn):
             return np.resize(data, (int(h), int(w), 2))
 
 def readPFM(file):
-    file = open(file, 'rb')
-
-    color = None
-    width = None
-    height = None
-    scale = None
-    endian = None
-
-    header = file.readline().rstrip()
-    if header == b'PF':
-        color = True
-    elif header == b'Pf':
-        color = False
+    """读取PFM格式文件（Portable Float Map）
+    
+    Args:
+        file: 文件路径（字符串）或文件对象
+        
+    Returns:
+        numpy数组，形状为 (height, width) 或 (height, width, 3)
+    """
+    # 如果是字符串路径，打开文件；否则假设是文件对象
+    file_path = file
+    if isinstance(file, str):
+        file = open(file, 'rb')
+        should_close = True
     else:
-        raise Exception('Not a PFM file.')
+        should_close = False
+    
+    try:
+        color = None
+        width = None
+        height = None
+        scale = None
+        endian = None
 
-    dim_match = re.match(rb'^(\d+)\s(\d+)\s$', file.readline())
-    if dim_match:
-        width, height = map(int, dim_match.groups())
-    else:
-        raise Exception('Malformed PFM header.')
+        # 读取文件头
+        header = file.readline().rstrip()
+        if header == b'PF':
+            color = True
+        elif header == b'Pf':
+            color = False
+        else:
+            raise Exception(f'Not a PFM file. Header: {header}')
 
-    scale = float(file.readline().rstrip())
-    if scale < 0:
-        endian = '<'
-        scale = -scale
-    else:
-        endian = '>'
+        # 读取尺寸
+        dim_line = file.readline()
+        dim_match = re.match(rb'^(\d+)\s(\d+)\s*$', dim_line)
+        if dim_match:
+            width, height = map(int, dim_match.groups())
+        else:
+            raise Exception(f'Malformed PFM header. Dimension line: {dim_line}')
 
-    data = np.fromfile(file, endian + 'f')
-    shape = (height, width, 3) if color else (height, width)
+        # 读取比例因子和字节序
+        scale_line = file.readline().rstrip()
+        try:
+            scale = float(scale_line)
+        except (ValueError, TypeError):
+            # 如果无法转换为float，尝试解码
+            if isinstance(scale_line, bytes):
+                scale = float(scale_line.decode('utf-8', errors='ignore'))
+            else:
+                raise Exception(f'Malformed PFM header. Scale line: {scale_line}')
+        
+        if scale < 0:
+            endian = '<'
+            scale = -scale
+        else:
+            endian = '>'
 
-    data = np.reshape(data, shape)
-    # 注意：PFM 格式通常從底部存儲，但為了與推論保持一致，
-    # 我們保持原始方向，不進行 flipud
-    # data = np.flipud(data)
-    return data
+        # 读取数据
+        data = np.fromfile(file, dtype=endian + 'f4')  # 明确指定float32
+        shape = (height, width, 3) if color else (height, width)
+        
+        # 检查数据大小是否匹配
+        expected_size = height * width * (3 if color else 1)
+        if len(data) < expected_size:
+            raise Exception(f'PFM file data incomplete. Expected {expected_size} floats, got {len(data)}')
+        elif len(data) > expected_size:
+            # 如果数据过多，只取需要的部分
+            data = data[:expected_size]
+
+        data = np.reshape(data, shape)
+        # 注意：PFM 格式通常從底部存儲，但為了與推論保持一致，
+        # 我們保持原始方向，不進行 flipud
+        # data = np.flipud(data)
+        return data
+    finally:
+        if should_close:
+            file.close()
 
 def read_gen(file_name, pil=False):
     ext = osp.splitext(file_name)[-1]

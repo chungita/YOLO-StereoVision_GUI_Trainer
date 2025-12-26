@@ -15,6 +15,7 @@ import cv2
 import numpy as np
 import random
 import struct
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -818,42 +819,92 @@ class RGBPreprocessor:
         try:
             with open(file_path, 'rb') as f:
                 # 讀取PFM頭部
-                header = f.readline().decode('utf-8').rstrip()
+                header_line = f.readline()
+                try:
+                    header = header_line.decode('utf-8').rstrip()
+                except UnicodeDecodeError:
+                    # 如果UTF-8解碼失敗，嘗試直接比較bytes
+                    header_bytes = header_line.rstrip()
+                    if header_bytes == b'PF':
+                        header = 'PF'
+                    elif header_bytes == b'Pf':
+                        header = 'Pf'
+                    else:
+                        raise ValueError(f"不是有效的PFM文件: {file_path}, 頭部: {header_bytes}")
                 
                 # 支持 "Pf" 和 "PF" 頭部
                 if header not in ['PF', 'Pf']:
                     raise ValueError(f"不是有效的PFM文件: {file_path}, 頭部: {header}")
                 
+                color = (header == 'PF')
+                
                 # 讀取尺寸
-                dims = f.readline().decode('utf-8').rstrip().split()
-                width, height = int(dims[0]), int(dims[1])
+                dim_line = f.readline()
+                try:
+                    dims = dim_line.decode('utf-8').rstrip().split()
+                    width, height = int(dims[0]), int(dims[1])
+                except (UnicodeDecodeError, ValueError, IndexError):
+                    # 如果解碼失敗，嘗試使用正則表達式
+                    dim_match = re.match(rb'^(\d+)\s(\d+)\s*$', dim_line)
+                    if dim_match:
+                        width, height = map(int, dim_match.groups())
+                    else:
+                        raise ValueError(f"PFM文件頭部格式錯誤: {file_path}, 尺寸行: {dim_line}")
                 
-                # 讀取比例因子
-                scale = float(f.readline().decode('utf-8').rstrip())
+                # 讀取比例因子和字節序
+                scale_line = f.readline()
+                try:
+                    scale = float(scale_line.decode('utf-8').rstrip())
+                except (UnicodeDecodeError, ValueError):
+                    # 如果解碼失敗，嘗試直接轉換
+                    scale_str = scale_line.rstrip()
+                    if isinstance(scale_str, bytes):
+                        try:
+                            scale = float(scale_str.decode('utf-8', errors='ignore'))
+                        except:
+                            scale = float(scale_str)
+                    else:
+                        scale = float(scale_str)
                 
-                # 讀取數據
-                data = f.read()
+                # 根據scale的符號確定字節序
+                if scale < 0:
+                    endian = '<'  # 小端
+                    scale = -scale
+                else:
+                    endian = '>'  # 大端
                 
-                # 解析數據
-                format_str = '<' + 'f' * (width * height)
+                # 讀取數據（使用numpy更高效）
+                data = np.fromfile(f, dtype=endian + 'f4')  # float32
                 
-                # 只讀取實際可用的數據
-                actual_pixels = len(data) // 4
-                if actual_pixels < width * height:
-                    format_str = format_str[:2] + 'f' * actual_pixels
-                    data = data[:actual_pixels * 4]
+                # 確定形狀
+                expected_size = height * width * (3 if color else 1)
                 
-                depth_data = struct.unpack(format_str, data)
-                depth_array = np.array(depth_data).reshape((height, width))
+                # 檢查數據大小
+                if len(data) < expected_size:
+                    raise ValueError(f"PFM文件數據不完整: {file_path}, 期望 {expected_size} 個浮點數, 實際 {len(data)} 個")
+                elif len(data) > expected_size:
+                    # 如果數據過多，只取需要的部分
+                    data = data[:expected_size]
+                
+                # 重塑數據
+                if color:
+                    depth_array = data.reshape((height, width, 3))
+                    # 如果是彩色，通常只取第一個通道或轉換為灰度
+                    if depth_array.shape[2] == 3:
+                        depth_array = depth_array[:, :, 0]  # 取第一個通道
+                else:
+                    depth_array = data.reshape((height, width))
                 
                 # PFM格式中，scale的絕對值表示比例因子
-                if abs(scale) != 1.0:
-                    depth_array = depth_array * abs(scale)
+                # 但通常scale已經被處理過了，這裡保持原樣
+                # 如果需要應用scale，取消下面的註釋
+                # if abs(scale) != 1.0:
+                #     depth_array = depth_array * abs(scale)
                 
                 return depth_array
                 
         except Exception as e:
-            raise e
+            raise ValueError(f"讀取PFM文件失敗 {file_path}: {e}") from e
     
     def _verify_generated_files(self):
         """驗證實際生成的文件數量"""
