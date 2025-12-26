@@ -30,22 +30,71 @@ class StereoInferenceModule(BaseModule):
         
     def find_latest_model(self):
         """自動查找最新的訓練模型"""
-        # 1. 查找 runs 目錄下最新的 checkpoints
-        runs_pattern = "runs/raft_stereo_*/checkpoints/*.pth"
-        model_files = glob.glob(runs_pattern)
-        if model_files:
-            # 按修改時間排序，返回最新的
-            latest = max(model_files, key=os.path.getmtime)
-            return latest
+        all_model_files = []
         
-        # 2. 查找 Model_file/Stereo_Vision 目錄下的模型
-        model_dir = Path("Model_file/Stereo_Vision")
-        if model_dir.exists():
-            pth_files = list(model_dir.glob("*.pth"))
-            if pth_files:
-                # 返回最新的
-                latest = max(pth_files, key=lambda p: p.stat().st_mtime)
-                return str(latest)
+        # 1. 查找 runs 目錄下所有的 checkpoints（支持嵌套目錄）
+        # 使用 pathlib 進行遞歸搜索，更可靠
+        runs_dir = Path("runs")
+        if runs_dir.exists():
+            try:
+                # 查找所有可能的 checkpoints 目錄
+                checkpoint_dirs = [
+                    runs_dir.glob("raft_stereo_*/checkpoints"),
+                    runs_dir.glob("raft_stereo_*/checkpoints/*"),  # 嵌套目錄
+                    runs_dir.glob("checkpoints"),
+                    runs_dir.glob("checkpoints/*"),  # 嵌套目錄
+                ]
+                
+                for dir_pattern in checkpoint_dirs:
+                    for checkpoint_dir in dir_pattern:
+                        if checkpoint_dir.is_dir():
+                            # 在該目錄下查找所有 .pth 文件
+                            pth_files = list(checkpoint_dir.rglob("*.pth"))
+                            all_model_files.extend([str(p) for p in pth_files])
+            except Exception as e:
+                # 如果搜索失敗，嘗試使用 glob
+                try:
+                    patterns = [
+                        "runs/raft_stereo_*/checkpoints/**/*.pth",
+                        "runs/raft_stereo_*/checkpoints/*.pth",
+                        "runs/checkpoints/stereo_training/*.pth",
+                        "runs/checkpoints/**/*.pth",
+                    ]
+                    for pattern in patterns:
+                        files = glob.glob(pattern, recursive=True)
+                        all_model_files.extend(files)
+                except Exception:
+                    pass
+        
+        # 2. 查找 Model_file 目錄下的模型
+        model_dirs = [
+            Path("Model_file/Stereo_Vision"),
+            Path("Model_file/PTH_File"),  # 向後兼容
+            Path("Model_file"),
+        ]
+        
+        for model_dir in model_dirs:
+            if model_dir.exists():
+                try:
+                    pth_files = list(model_dir.glob("*.pth"))
+                    all_model_files.extend([str(p) for p in pth_files])
+                except Exception as e:
+                    continue
+        
+        # 3. 過濾並選擇最新的模型
+        if all_model_files:
+            # 去重並過濾掉不存在的文件
+            unique_files = list(set(all_model_files))
+            valid_files = [f for f in unique_files if os.path.exists(f)]
+            
+            if valid_files:
+                # 按修改時間排序，返回最新的
+                try:
+                    latest = max(valid_files, key=os.path.getmtime)
+                    return latest
+                except Exception as e:
+                    # 如果獲取修改時間失敗，返回第一個找到的文件
+                    return valid_files[0]
         
         return None
         
@@ -142,7 +191,7 @@ class StereoInferenceModule(BaseModule):
         
         output_layout.addWidget(QLabel("輸出目錄:"), 0, 0)
         self.output_dir_edit = QLineEdit()
-        self.output_dir_edit.setPlaceholderText("留空則自動創建 (runs/stereo_inference_時間戳)")
+        self.output_dir_edit.setPlaceholderText("留空則在當前目錄創建，選擇目錄則在該目錄下創建 stereo_inference_時間戳 子目錄")
         self.output_dir_edit.setText("")  # 默認留空，自動生成
         output_layout.addWidget(self.output_dir_edit, 1, 0)
         
@@ -176,7 +225,11 @@ class StereoInferenceModule(BaseModule):
            - 輸出格式：選擇視差圖保存格式
            - 圖像翻轉：僅對非PFM格式生效，進行水平和垂直翻轉
         
-        4. 輸出格式說明：
+        4. 輸出目錄：
+           - 留空：自動在當前目錄創建 stereo_inference_時間戳 目錄
+           - 選擇目錄：在選擇的目錄下創建 stereo_inference_時間戳 子目錄
+        
+        5. 輸出格式說明：
            ✨ PFM (推薦用於精確分析):
               - 保存原始浮點數視差值，無損失
               - 可用於後續精確計算和分析
@@ -250,16 +303,25 @@ class StereoInferenceModule(BaseModule):
     
     def auto_find_model(self):
         """自動查找最新的模型"""
+        self.log("🔍 正在自動查找最新的訓練模型...")
         model_path = self.find_latest_model()
         if model_path:
-            self.stereo_model_edit.setText(model_path)
+            # 轉換為絕對路徑以便顯示
+            abs_path = os.path.abspath(model_path)
+            self.stereo_model_edit.setText(abs_path)
             self.log(f"✅ 自動找到模型: {Path(model_path).name}")
+            self.log(f"   完整路徑: {abs_path}")
         else:
             self.log("⚠️  未找到訓練模型，請手動選擇")
+            self.log("   請確保模型文件在以下位置之一:")
+            self.log("   - runs/raft_stereo_*/checkpoints/**/*.pth")
+            self.log("   - runs/checkpoints/stereo_training/*.pth")
+            self.log("   - Model_file/Stereo_Vision/*.pth")
             QMessageBox.warning(
                 self.parent, "警告 Warning",
-                "未找到訓練模型\n請手動選擇模型文件或確保模型在以下位置之一:\n"
-                "- runs/raft_stereo_*/checkpoints/*.pth\n"
+                "未找到訓練模型\n請手動選擇模型文件或確保模型在以下位置之一:\n\n"
+                "- runs/raft_stereo_*/checkpoints/**/*.pth\n"
+                "- runs/checkpoints/stereo_training/*.pth\n"
                 "- Model_file/Stereo_Vision/*.pth"
             )
     
@@ -374,12 +436,16 @@ class StereoInferenceModule(BaseModule):
         flip_non_pfm = self.flip_non_pfm_check.isChecked()
         
         # 創建帶時間戳的輸出目錄
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%dT%H%M")
+        
         if self.output_dir_edit.text():
-            output_dir = self.output_dir_edit.text()
+            # 在用戶指定的輸出目錄下創建帶時間戳的子目錄
+            base_dir = self.output_dir_edit.text().strip()
+            output_dir = str(Path(base_dir) / f"stereo_inference_{timestamp}")
         else:
-            from datetime import datetime
-            timestamp = datetime.now().strftime("%Y%m%dT%H%M")
-            output_dir = f"runs/stereo_inference_{timestamp}"
+            # 默認：在當前目錄創建帶時間戳的目錄
+            output_dir = f"stereo_inference_{timestamp}"
         
         self.log(f"🔍 開始立體視覺推理")
         self.log(f"   模型: {Path(model_path).name}")

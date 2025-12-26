@@ -15,7 +15,7 @@ inference:
   mode: 單張圖像推理
   model_path: D:/YOLO/runs/yolov12n_50epochs_20251022_1343/train/weights/best.pt
   output_path: ''
-last_saved: '2025-12-17 14:35:19'
+last_saved: '2025-12-25 16:07:41'
 model_analyzer:
   file_type_filter: 所有類型
 model_modifier:
@@ -75,14 +75,14 @@ standard_training:
   workers: 0
 stereo_inference:
   flip_non_pfm: false
-  left_imgs: D:/YOLO/Dataset/dataset_Stereo_20251215/Img0/test/Forest_Video_1_Img0_6.png
+  left_imgs: D:/DMD/Forest/Forest_Video_11/Img/Img0_13.png
   mixed_precision: true
-  model_path: runs\raft_stereo_20251216T2248\checkpoints\raft-stereo-20251216T2248.pth
-  output_dir: demo_output
+  model_path: C:\Users\User\Downloads\YOLO-StereoVision_GUI_Trainer\runs\raft_stereo_20251224T2021\checkpoints\stereo_training\raft-stereo-20251224T2021.pth
+  output_dir: C:/Users/User/Downloads/YOLO-StereoVision_GUI_Trainer/runs
   output_format: png
-  right_imgs: D:/YOLO/Dataset/dataset_Stereo_20251215/Img1/test/Forest_Video_1_Img1_6.png
+  right_imgs: D:/DMD/Forest/Forest_Video_11/Img/Img1_13.png
   save_numpy: false
-  valid_iters: 50
+  valid_iters: 16
 stereo_training:
   advanced_params:
     context_norm: group
@@ -110,7 +110,7 @@ stereo_training:
     weight_decay: 1.0e-05
   batch_size: 2
   dataset_path: Dataset\dataset_Stereo_20251215
-  model_name: (無可用模型 - 請放置模型文件)
+  model_name: raftstereo-sceneflow.pth
   num_steps: 1000
   output_path: ''
 window:
@@ -119,4 +119,4 @@ window:
     width: 1716
     x: 2
     y: 127
-  last_tab_index: 1
+  last_tab_index: 6
