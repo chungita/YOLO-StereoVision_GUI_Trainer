@@ -578,4 +578,3 @@ class StereoInferenceModule(BaseModule):
             
         except Exception as e:
             self.log(f"[WARNING] 保存立體視覺推理設置失敗: {e}")
-

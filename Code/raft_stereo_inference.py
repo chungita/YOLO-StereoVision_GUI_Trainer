@@ -35,10 +35,7 @@ try:
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
-    try:
-        print("Warning: OpenCV not available, will use PIL for image processing")
-    except:
-        pass  # 如果打印也失败，就跳过
+    print("警告: OpenCV 不可用，将使用 PIL 进行图像处理")
 
 
 def read_image(path):
@@ -101,30 +98,20 @@ def save_disparity_image(disparity, path, output_format='png', flip=False):
     path_str = str(Path(path))
     
     disparity_np = disparity.cpu().numpy()
-    
-    # 处理不同的输入形状
-    # 可能的形状: (B, C, H, W), (C, H, W), (H, W)
-    while len(disparity_np.shape) > 2:
-        if disparity_np.shape[0] == 1:
-            disparity_np = disparity_np[0]  # 移除 batch 或通道维度
-        else:
-            break
-    
-    # 确保是 2D 数组 (H, W)
+    if len(disparity_np.shape) == 3:
+        disparity_np = disparity_np[0]  # 移除 batch 维度
     if len(disparity_np.shape) == 2:
-        disparity_2d = disparity_np
-    elif len(disparity_np.shape) == 1:
-        # 如果是一维，尝试重塑
-        raise ValueError(f"Cannot handle 1D disparity array with shape: {disparity_np.shape}")
-    else:
-        # 取第一个通道
-        disparity_2d = disparity_np[0] if disparity_np.shape[0] == 1 else disparity_np
+        disparity_np = disparity_np[np.newaxis, :, :]  # 添加通道维度
+    
+    # 获取单通道视差图
+    disparity_2d = disparity_np[0]
     
     # 应用翻转（如果需要）
     if flip:
         disparity_2d = np.flipud(np.fliplr(disparity_2d))
     
-    # 归一化到 0-1 范围用于可视化
+    # 归一化到 0-255 范围用于可视化
+    # 使用 jet colormap 进行彩色可视化
     if disparity_2d.max() > disparity_2d.min():
         normalized = (disparity_2d - disparity_2d.min()) / (disparity_2d.max() - disparity_2d.min())
     else:
@@ -134,24 +121,19 @@ def save_disparity_image(disparity, path, output_format='png', flip=False):
     try:
         from matplotlib import cm
         jet = cm.get_cmap('jet')
-        # normalized 应该是 (H, W) 形状
-        colored = jet(normalized)  # 返回 (H, W, 4) RGBA
-        colored = (colored[:, :, :3] * 255).astype(np.uint8)  # 只取 RGB，转换为 uint8
+        colored = jet(normalized)[:, :, :3]  # 只取 RGB，忽略 alpha
+        colored = (colored * 255).astype(np.uint8)
     except ImportError:
         # 如果没有 matplotlib，使用简单的灰度图
         colored = (normalized * 255).astype(np.uint8)
-        colored = np.stack([colored, colored, colored], axis=-1)  # (H, W, 3)
-    
-    # 确保 colored 是 (H, W, 3) 格式
-    if len(colored.shape) != 3 or colored.shape[2] != 3:
-        raise ValueError(f"Invalid color array shape: {colored.shape}, expected (H, W, 3)")
+        colored = np.stack([colored, colored, colored], axis=-1)
     
     # 确保输出目录存在
     output_dir = Path(path_str).parent
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # 保存图像
-    img = Image.fromarray(colored, 'RGB')
+    img = Image.fromarray(colored)
     img.save(path_str, format=output_format.upper())
     
     # 验证文件是否成功创建
@@ -305,15 +287,8 @@ def demo(args):
             image1_pad, image2_pad = padder.pad(image1, image2)
             
             # 推理
-            # 兼容不同版本的 autocast
-            try:
-                # PyTorch 2.0+ 需要 device_type 参数
-                with autocast(device_type=device.split(':')[0], enabled=args.mixed_precision):
-                    _, flow_up = model(image1_pad, image2_pad, iters=args.valid_iters, test_mode=True)
-            except TypeError:
-                # 旧版本 PyTorch
-                with autocast(enabled=args.mixed_precision):
-                    _, flow_up = model(image1_pad, image2_pad, iters=args.valid_iters, test_mode=True)
+            with autocast(enabled=args.mixed_precision):
+                _, flow_up = model(image1_pad, image2_pad, iters=args.valid_iters, test_mode=True)
             
             # 去除填充
             flow_up = padder.unpad(flow_up)
