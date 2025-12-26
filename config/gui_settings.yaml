@@ -15,7 +15,7 @@ inference:
   mode: 單張圖像推理
   model_path: D:/YOLO/runs/yolov12n_50epochs_20251022_1343/train/weights/best.pt
   output_path: ''
-last_saved: '2025-12-26 12:33:35'
+last_saved: '2025-12-26 16:32:26'
 model_analyzer:
   file_type_filter: 所有類型
 model_modifier:
@@ -82,7 +82,7 @@ stereo_inference:
   output_format: pfm
   right_imgs: D:/DMD/Forest/Forest_Video_11/Img/Img1_13.png
   save_numpy: false
-  valid_iters: 16
+  valid_iters: 50
 stereo_training:
   advanced_params:
     context_norm: group
